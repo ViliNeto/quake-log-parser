@@ -1,5 +1,9 @@
 package main
 
-func main() {
+import (
+	"./parsers"
+)
 
+func main() {
+	parsers.ParsetoJson()
 }
