@@ -20,4 +20,19 @@ func main() {
 	test2 := killRegex.FindStringSubmatch(str2)
 	println(test2[2], "---", test2[4], "---", test2[6])
 
+	str3 := `  0:00 InitGame: \sv_floodProtect\1\sv_maxPing\0\sv_minPing\0\sv_maxRate\10000\sv_minRate\0\sv_hostname\Code Miner`
+	initRegex, err := regexp.Compile(`[0-9:]{4}`)
+	if err != nil {
+		println(err)
+	}
+	test3 := initRegex.FindStringSubmatch(str3)
+	println(test3[0], "--- Init Time")
+
+	str4 := `                      1:47 ShutdownGame:`
+	shutdownRegex, err := regexp.Compile(`[0-9:]{4}`)
+	if err != nil {
+		println(err)
+	}
+	test4 := shutdownRegex.FindStringSubmatch(str4)
+	println(test4[0], "--- Shutdown Time")
 }
