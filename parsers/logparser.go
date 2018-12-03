@@ -2,6 +2,7 @@ package parsers
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -15,7 +16,7 @@ var userRegex, killRegex, initRegex, shutdownRegex *regexp.Regexp
 
 const gameDescription = "game_"
 
-var games []structs.Game
+var games map[string]structs.Game
 var game structs.Game
 var playerStats structs.PlayerStats
 var playerKills structs.PlayerKills
@@ -27,7 +28,7 @@ func initRegexCompile() (err error) {
 		return
 	}
 	//userRegex -> [1], "---", [2], "---", [3], "---", [4] == 20:34 --- ClientUserinfoChanged --- 2 --- Isgalamido
-	userRegex, err = regexp.Compile(`.*?((?:(?:[0-1][0-9])|(?:[2][0-3])|(?:[0-9])):(?:[0-5][0-9])(?::[0-5][0-9])?(?:\s\s)?).*?(ClientUserinfoChanged):\s(.)\sn\\(.*)\\t\\`)
+	userRegex, err = regexp.Compile(`.*?((?:(?:[0-9][0-9])|(?:[2][0-3])|(?:[0-9])):(?:[0-5][0-9])(?::[0-5][0-9])?(?:\s\s)?).*?(ClientUserinfoChanged):\s(.)\sn\\(.*)\\t\\`)
 	if err != nil {
 		return
 	}
@@ -50,7 +51,7 @@ func ParsetoJSON() (err error) {
 	control := false
 	err = initRegexCompile()
 	if err != nil {
-		return err
+		return
 	}
 	//Opens games.log file
 	file, err := os.Open("./games.log")
@@ -125,6 +126,8 @@ func parseLine(text string) bool {
 	if strings.Contains(text, "ShutdownGame") {
 		// println("ShutdownGame")
 		fmt.Printf("%v", game)
+		b, _ := json.Marshal(game)
+		println(string(b))
 		return true
 	}
 
