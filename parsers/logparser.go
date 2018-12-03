@@ -16,10 +16,9 @@ var userRegex, killRegex, initRegex, shutdownRegex *regexp.Regexp
 
 const gameDescription = "game_"
 
-var games map[string]structs.Game
+var games []structs.Game
 var game structs.Game
 var playerStats structs.PlayerStats
-var playerKills structs.PlayerKills
 
 func initRegexCompile() (err error) {
 	//initRegex -> [0] == 0:00"
@@ -28,7 +27,7 @@ func initRegexCompile() (err error) {
 		return
 	}
 	//userRegex -> [1], "---", [2], "---", [3], "---", [4] == 20:34 --- ClientUserinfoChanged --- 2 --- Isgalamido
-	userRegex, err = regexp.Compile(`.*?((?:(?:[0-9][0-9])|(?:[2][0-3])|(?:[0-9])):(?:[0-5][0-9])(?::[0-5][0-9])?(?:\s\s)?).*?(ClientUserinfoChanged):\s(.)\sn\\(.*)\\t\\`)
+	userRegex, err = regexp.Compile(`.*?((?:(?:[0-1][0-9])|(?:[2][0-3])|(?:[0-9])):(?:[0-5][0-9])(?::[0-5][0-9])?(?:\s\s)?).*?(ClientUserinfoChanged):\s(.)\sn\\(.*)\\t\\`)
 	if err != nil {
 		return
 	}
@@ -51,7 +50,7 @@ func ParsetoJSON() (err error) {
 	control := false
 	err = initRegexCompile()
 	if err != nil {
-		return
+		return err
 	}
 	//Opens games.log file
 	file, err := os.Open("./games.log")
@@ -91,13 +90,15 @@ func parseLine(text string) bool {
 		_, ok = playerStats.PlayerID[userDetail[4]]
 		//IF there is no key related to a playerStats name
 		if !ok {
-			m := make(map[string]int)
-			id, _ := strconv.Atoi(userDetail[3])
-
-			m[userDetail[4]] = id
-			playerStats.PlayerID = m
-
-			game.Players = append(game.Players, userDetail[4])
+			if playerStats.PlayerID == nil {
+				m := make(map[string]int)
+				m[userDetail[4]], _ = strconv.Atoi(userDetail[3])
+				playerStats.PlayerID = m
+				game.Players = append(game.Players, userDetail[4])
+			} else {
+				playerStats.PlayerID[userDetail[4]], _ = strconv.Atoi(userDetail[3])
+				game.Players = append(game.Players, userDetail[4])
+			}
 		}
 		// fmt.Printf("%v", game.Players)
 	}
@@ -105,29 +106,28 @@ func parseLine(text string) bool {
 		killDetail = killRegex.FindStringSubmatch(text)
 		//Search for a player already registered with same
 		if killDetail[2] != "<world>" {
-			_, ok = playerKills.PlayerKill[killDetail[2]]
+			_, ok = game.PlayerKill[killDetail[2]]
 			//IF there is no key related to a playerStats name
 			if !ok {
-				if playerKills.PlayerKill == nil {
+				if game.PlayerKill == nil {
 					m := make(map[string]int)
 					m[killDetail[2]] = 1
-					playerKills.PlayerKill = m
-					game.PlayerKill = playerKills
+					game.PlayerKill = m
 				} else {
-					playerKills.PlayerKill[killDetail[2]] = 1
-					game.PlayerKill = playerKills
+					game.PlayerKill[killDetail[2]] = 1
 				}
 			} else {
-				playerKills.PlayerKill[killDetail[2]] = playerKills.PlayerKill[killDetail[2]] + 1
-				game.PlayerKill = playerKills
+				game.PlayerKill[killDetail[2]] = game.PlayerKill[killDetail[2]] + 1
 			}
 		}
 	}
 	if strings.Contains(text, "ShutdownGame") {
-		// println("ShutdownGame")
+		// println("ShutdownGame").
+		game.Gamenumber = 1
 		fmt.Printf("%v", game)
 		b, _ := json.Marshal(game)
 		println(string(b))
+		game = structs.Game{}
 		return true
 	}
 
