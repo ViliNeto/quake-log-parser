@@ -2,10 +2,7 @@ package structs
 
 //Game -> Struct related to a game statistics
 type Game struct {
-	Gamenumber int            `json:"game,omitempty"`
-	TotalKills int            `json:"total_kills,omitempty"`
-	Players    []string       `json:"players,omitempty"`
-	PlayerKill map[string]int `json:"kills,omitempty"`
+	Gamenumber map[string]GameDetail
 }
 
 //GameDetail -> Struct related to a game statistics [Detail]

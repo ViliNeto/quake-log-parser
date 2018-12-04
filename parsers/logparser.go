@@ -18,6 +18,7 @@ const gameDescription = "game_"
 
 var games []structs.Game
 var game structs.Game
+var gamedetail structs.GameDetail
 var playerStats structs.PlayerStats
 
 func initRegexCompile() (err error) {
@@ -94,10 +95,10 @@ func parseLine(text string) bool {
 				m := make(map[string]int)
 				m[userDetail[4]], _ = strconv.Atoi(userDetail[3])
 				playerStats.PlayerID = m
-				game.Players = append(game.Players, userDetail[4])
+				gamedetail.Players = append(gamedetail.Players, userDetail[4])
 			} else {
 				playerStats.PlayerID[userDetail[4]], _ = strconv.Atoi(userDetail[3])
-				game.Players = append(game.Players, userDetail[4])
+				gamedetail.Players = append(gamedetail.Players, userDetail[4])
 			}
 		}
 		// fmt.Printf("%v", game.Players)
@@ -106,27 +107,31 @@ func parseLine(text string) bool {
 		killDetail = killRegex.FindStringSubmatch(text)
 		//Search for a player already registered with same
 		if killDetail[2] != "<world>" {
-			_, ok = game.PlayerKill[killDetail[2]]
+			_, ok = gamedetail.PlayerKill[killDetail[2]]
 			//IF there is no key related to a playerStats name
 			if !ok {
-				if game.PlayerKill == nil {
+				if gamedetail.PlayerKill == nil {
 					m := make(map[string]int)
 					m[killDetail[2]] = 1
-					game.PlayerKill = m
+					gamedetail.PlayerKill = m
 				} else {
-					game.PlayerKill[killDetail[2]] = 1
+					gamedetail.PlayerKill[killDetail[2]] = 1
 				}
 			} else {
-				game.PlayerKill[killDetail[2]] = game.PlayerKill[killDetail[2]] + 1
+				gamedetail.PlayerKill[killDetail[2]] = gamedetail.PlayerKill[killDetail[2]] + 1
 			}
 		}
 	}
 	if strings.Contains(text, "ShutdownGame") {
 		// println("ShutdownGame").
-		game.Gamenumber = 1
+		m := make(map[string]structs.GameDetail)
+		m["game_1"] = gamedetail
+		game.Gamenumber = m
 		fmt.Printf("%v", game)
-		b, _ := json.Marshal(game)
+		b, _ := json.Marshal(game.Gamenumber)
+
 		println(string(b))
+
 		game = structs.Game{}
 		return true
 	}
