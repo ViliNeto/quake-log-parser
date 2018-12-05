@@ -3,7 +3,6 @@ package parsers
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"os"
 	"regexp"
 	"strconv"
@@ -16,10 +15,15 @@ var userRegex, killRegex, initRegex, shutdownRegex *regexp.Regexp
 
 const gameDescription = "game_"
 
-var games []structs.Game
-var game structs.Game
+var gameCount = 0
+
+var totalKills = 0
+var game map[string]structs.GameDetail
 var gamedetail structs.GameDetail
-var playerStats structs.PlayerStats
+var games []map[string]structs.GameDetail
+
+//PlayerAux -> Auxiliar to control how many players enters in a server
+var playerAux map[string]interface{}
 
 func initRegexCompile() (err error) {
 	//initRegex -> [0] == 0:00"
@@ -48,7 +52,6 @@ func initRegexCompile() (err error) {
 
 //ParsetoJSON -> Function that reads a file (game.log) and convert it to json
 func ParsetoJSON() (err error) {
-	control := false
 	err = initRegexCompile()
 	if err != nil {
 		return err
@@ -62,79 +65,82 @@ func ParsetoJSON() (err error) {
 	//Reads line a line to parse log file
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		control = parseLine(scanner.Text())
-		if control {
-			break
-		}
+		parseLine(scanner.Text())
 	}
-
+	//Convert the object to JSON
+	c, _ := json.Marshal(games)
+	//Print json on console
+	println(string(c))
 	if err := scanner.Err(); err != nil {
 		return err
 	}
-
-	//err = writeFile(games)
-
 	return
 }
 
-func parseLine(text string) bool {
+func parseLine(text string) {
 	var userDetail, killDetail []string
 	var ok bool
 
 	if strings.Contains(text, "InitGame") {
-		// println("InitGame")
+		//
 	}
 
 	if strings.Contains(text, "ClientUserinfoChanged") {
 		userDetail = userRegex.FindStringSubmatch(text)
 		//Search for a player already registered with same
-		_, ok = playerStats.PlayerID[userDetail[4]]
+		_, ok = playerAux[userDetail[4]]
 		//IF there is no key related to a playerStats name
 		if !ok {
-			if playerStats.PlayerID == nil {
-				m := make(map[string]int)
-				m[userDetail[4]], _ = strconv.Atoi(userDetail[3])
-				playerStats.PlayerID = m
+			if playerAux == nil {
+				m := make(map[string]interface{})
+				m[userDetail[4]] = nil
+				playerAux = m
 				gamedetail.Players = append(gamedetail.Players, userDetail[4])
 			} else {
-				playerStats.PlayerID[userDetail[4]], _ = strconv.Atoi(userDetail[3])
+				playerAux[userDetail[4]] = nil
 				gamedetail.Players = append(gamedetail.Players, userDetail[4])
 			}
 		}
-		// fmt.Printf("%v", game.Players)
 	}
 	if strings.Contains(text, "Kill:") {
 		killDetail = killRegex.FindStringSubmatch(text)
 		//Search for a player already registered with same
 		if killDetail[2] != "<world>" {
+			var typeOfKill int
+			if killDetail[2] != killDetail[4] {
+				typeOfKill = 1
+				//Only adds a kill to total count if 1 player kill another player - in case of suicide this is not added
+				totalKills++
+			} else {
+				typeOfKill = -1
+			}
 			_, ok = gamedetail.PlayerKill[killDetail[2]]
 			//IF there is no key related to a playerStats name
 			if !ok {
 				if gamedetail.PlayerKill == nil {
 					m := make(map[string]int)
-					m[killDetail[2]] = 1
+					m[killDetail[2]] = typeOfKill
 					gamedetail.PlayerKill = m
 				} else {
-					gamedetail.PlayerKill[killDetail[2]] = 1
+					gamedetail.PlayerKill[killDetail[2]] = typeOfKill
 				}
 			} else {
-				gamedetail.PlayerKill[killDetail[2]] = gamedetail.PlayerKill[killDetail[2]] + 1
+				gamedetail.PlayerKill[killDetail[2]] = gamedetail.PlayerKill[killDetail[2]] + typeOfKill
 			}
 		}
 	}
 	if strings.Contains(text, "ShutdownGame") {
-		// println("ShutdownGame").
+		gameCount++
 		m := make(map[string]structs.GameDetail)
-		m["game_1"] = gamedetail
-		game.Gamenumber = m
-		fmt.Printf("%v", game)
-		b, _ := json.Marshal(game.Gamenumber)
+		gamedetail.TotalKills = totalKills
+		m["game_"+strconv.Itoa(gameCount)] = gamedetail
+		game = m
+		games = append(games, game)
 
-		println(string(b))
-
-		game = structs.Game{}
-		return true
+		//Reseting all variables
+		game = nil
+		playerAux = nil
+		gamedetail = structs.GameDetail{}
+		totalKills = 0
 	}
-
-	return false
 }
