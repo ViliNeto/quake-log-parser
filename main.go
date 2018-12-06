@@ -11,7 +11,8 @@ func main() {
 	//If there is some error during the parsing process
 	if err != nil {
 		panic("Error parsing the game log file")
-	} else {
+	} else { //In case the parser finishes successfully
+		//Starts the REST API server passing the parsed JSON log as argument
 		restapi.StartServer(parsedJSON)
 	}
 
