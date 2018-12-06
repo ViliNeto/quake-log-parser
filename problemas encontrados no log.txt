@@ -1,2 +1,3 @@
-1 - Usuários se reconectam e trocam de ID
+﻿1 - Usuários se reconectam e trocam de ID
 2 - Existem chamadas de InitGame mesmo antes de game ser finalizado (ShutdownGame), por isso tomei a decisão de considerar o ShutdownGame como finalizador de game, então somente ele "reseta" a contagem
+3 - Horarios de jogos fora do padrão
