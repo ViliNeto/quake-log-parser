@@ -2,7 +2,6 @@ package parsers
 
 import (
 	"bufio"
-	"encoding/json"
 	"os"
 	"regexp"
 	"strconv"
@@ -51,30 +50,26 @@ func initRegexCompile() (err error) {
 }
 
 //ParsetoJSON -> Function that reads a file (game.log) and convert it to json
-func ParsetoJSON() (err error) {
-	err = initRegexCompile()
+func ParsetoJSON() ([]map[string]structs.GameDetail, error) {
+	err := initRegexCompile()
 	if err != nil {
-		return err
+		return games, err
 	}
 	//Opens games.log file
 	file, err := os.Open("./games.log")
 	defer file.Close()
 	if err != nil {
-		return
+		return games, err
 	}
 	//Reads line a line to parse log file
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		parseLine(scanner.Text())
 	}
-	//Convert the object to JSON
-	c, _ := json.Marshal(games)
-	//Print json on console
-	println(string(c))
 	if err := scanner.Err(); err != nil {
-		return err
+		return games, err
 	}
-	return
+	return games, err
 }
 
 func parseLine(text string) {
