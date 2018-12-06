@@ -1,0 +1,8 @@
+version: '2.1'
+
+services:
+  luizalabs-quake-log-api:
+    image: quake-log-api
+    build: .
+    ports:
+      - 9000:9000
