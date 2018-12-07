@@ -15,6 +15,7 @@
 ### Go Patch ###
 /vendor/
 /Godeps/
+/testedemesa/
 
 # Env file
 Env.env
