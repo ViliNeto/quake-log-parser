@@ -24,5 +24,33 @@ instructions.
 
 There was not used any dependency out of regular golang packages.
 
+### How to use it?
+
+Postman collection to this app: https://www.getpostman.com/collections/769f4e9d5c1c2f7092de
+
+#### Task 1
+
+In order to get all games in the game log you must do:
+
+```
+GET /get 
+Host: {{url}}:9000
+```
+#### Task 2
+
+If you want a specific game information
+
+```
+POST /post 
+Host: {{url}}:9000
+Content-Type: application/json
+{
+    "game":"game_8"
+}
+```
+
+
+
+
 
 Any doubt please let me know.
